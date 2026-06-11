@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulasi CAT CPNS - BKN</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)" />
+  <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap)" rel="stylesheet" />
   <style>
     /* =========================================================
        RESET & BASE
@@ -124,7 +124,7 @@
     .hero-banner::before {
       content: '';
       position: absolute; inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='[http://www.w3.org/2000/svg'%3E%3Cg](http://www.w3.org/2000/svg'%3E%3Cg) fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     }
     .hero-eyebrow {
       display: inline-block;
@@ -268,40 +268,6 @@
     .btn-start:hover { opacity: 0.9; transform: scale(1.01); }
     .exam-card.skb .btn-start { background: linear-gradient(135deg, var(--bkn-green), #27ae60); }
 
-    /* Info panels below cards */
-    .info-panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 32px; }
-    .info-panel {
-      background: white;
-      border-radius: 10px;
-      padding: 18px 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      border-left: 4px solid var(--bkn-blue2);
-    }
-    .info-panel h4 { font-size: 0.85rem; font-weight: 700; color: var(--bkn-blue); margin-bottom: 6px; }
-    .info-panel p  { font-size: 0.8rem; color: var(--text-sub); line-height: 1.6; }
-
-    /* Passing grade table */
-    .pg-table-wrap { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 24px; margin-top: 28px; }
-    .pg-table-wrap h3 { font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .pg-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .pg-table th { background: var(--bkn-blue); color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
-    .pg-table th:first-child { border-radius: 6px 0 0 0; }
-    .pg-table th:last-child  { border-radius: 0 6px 0 0; }
-    .pg-table td { padding: 9px 14px; border-bottom: 1px solid var(--bkn-border); color: var(--text-sub); }
-    .pg-table tr:last-child td { border-bottom: none; }
-    .pg-table tr:hover td { background: var(--bkn-light); }
-
-    /* Footer */
-    .site-footer {
-      background: var(--bkn-blue);
-      color: rgba(255,255,255,0.7);
-      text-align: center;
-      padding: 20px;
-      font-size: 0.8rem;
-      margin-top: 40px;
-    }
-    .site-footer strong { color: white; }
-
     /* =========================================================
        ===== VIEW 2: SIMULASI UJIAN =====
     ========================================================= */
@@ -405,12 +371,6 @@
       line-height: 1.8;
       color: var(--text-main);
       font-weight: 500;
-    }
-    .question-image {
-      width: 100%; max-width: 460px;
-      border-radius: 8px;
-      margin: 16px 0;
-      border: 1px solid var(--bkn-border);
     }
 
     /* Answer options */
@@ -952,8 +912,6 @@ let state = {
   examStartTime:  null,
 };
 
-// URL API Vercel Anda. Kosongkan '/' jika HTML & API di-host di Vercel yang sama.
-// Jika di host terpisah (misal GitHub pages), isi dengan full URL Vercel Anda: 'https://nama-project.vercel.app/api/soal'
 const VERCEL_API_URL = '/api/soal'; 
 
 function showView(viewId) {
@@ -990,9 +948,14 @@ async function fetchFromAPI(examType) {
     }
     
     const data = await response.json();
+    if (!data.questions || data.questions.length === 0) {
+      throw new Error("Format JSON API tidak valid / kosong");
+    }
     return data.questions;
   } catch (error) {
     console.warn("API Gagal, menggunakan mock data statis sebagai cadangan:", error);
+    // Tampilkan Peringatan
+    alert("⚠️ Timeout / Gagal terhubung ke AI.\n\nMenggunakan Bank Soal Cadangan (Mock Data) agar tes tetap bisa berjalan.");
     return loadMockData(examType); // Fallback ke mock data jika Vercel/Groq error
   }
 }
@@ -1003,21 +966,38 @@ async function loadMockData(examType) {
     return [
       {
         id: 1, subtest: 'TWK', subtestFull: 'Tes Wawasan Kebangsaan',
-        tipe: 'pilihan_ganda', text: '(MOCK) Pancasila sebagai dasar negara diusulkan oleh...',
+        tipe: 'pilihan_ganda', text: '(CADANGAN) Pancasila sebagai dasar negara diusulkan oleh...',
         options: { A: 'Moh Yamin', B: 'Soekarno', C: 'Soepomo', D: 'Hatta', E: 'Sjahrir' },
         kunciJawaban: 'B', nilai: { benar: 5, salah: 0 }
       },
       {
         id: 2, subtest: 'TIU', subtestFull: 'Tes Intelejensi Umum',
-        tipe: 'pilihan_ganda', text: '(MOCK) Jika 3x + 7 = 22, maka x adalah...',
+        tipe: 'pilihan_ganda', text: '(CADANGAN) Jika 3x + 7 = 22, maka x adalah...',
         options: { A: '3', B: '4', C: '5', D: '6', E: '7' },
         kunciJawaban: 'C', nilai: { benar: 5, salah: 0 }
       },
       {
         id: 3, subtest: 'TKP', subtestFull: 'Tes Karakteristik Pribadi',
-        tipe: 'tkp', text: '(MOCK) Rekan kerja Anda kesulitan menggunakan aplikasi baru. Anda...',
+        tipe: 'tkp', text: '(CADANGAN) Rekan kerja Anda kesulitan menggunakan aplikasi baru. Anda...',
         options: { A: 'Mengejeknya', B: 'Membiarkan', C: 'Melaporkan ke atasan', D: 'Membantu sebisanya', E: 'Mengajarinya hingga paham' },
         nilaiOpsi: { A: 1, B: 2, C: 3, D: 4, E: 5 }
+      }
+    ];
+  }
+  
+  if (examType === 'skb') {
+    return [
+      {
+        id: 1, subtest: 'SKB', subtestFull: 'Seleksi Kompetensi Bidang',
+        tipe: 'pilihan_ganda', text: '(CADANGAN) Dalam manajemen ASN, prinsip merit system berarti rekrutmen berdasarkan...',
+        options: { A: 'Kekeluargaan', B: 'Senioritas', C: 'Kompetensi & Kinerja', D: 'Rekomendasi atasan', E: 'Pemilihan suara' },
+        kunciJawaban: 'C', nilai: { benar: 5, salah: 0 }
+      },
+      {
+        id: 2, subtest: 'SKB', subtestFull: 'Seleksi Kompetensi Bidang',
+        tipe: 'pilihan_ganda', text: '(CADANGAN) Manajemen kinerja ASN bertujuan utama untuk...',
+        options: { A: 'Menghukum pegawai', B: 'Memastikan target tercapai', C: 'Membuat laporan panjang', D: 'Menyederhanakan jabatan', E: 'Mengurangi pegawai' },
+        kunciJawaban: 'B', nilai: { benar: 5, salah: 0 }
       }
     ];
   }
@@ -1028,13 +1008,12 @@ async function loadMockData(examType) {
    START EXAM
 ============================================================== */
 async function startExam(examType) {
-  showLoading('Membangun Bank Soal...<br><small>Meminta Groq AI untuk generate soal ' + examType.toUpperCase() + '</small>');
+  showLoading('Membangun Bank Soal...<br><small>Meminta AI untuk generate soal ' + examType.toUpperCase() + '</small>');
 
   try {
-    // Memanggil Vercel API
     const questions = await fetchFromAPI(examType);
 
-    if(!questions || questions.length === 0) throw new Error("Data soal kosong");
+    if(!questions || questions.length === 0) throw new Error("Data soal kosong setelah fallback");
 
     state.currentExamType  = examType;
     state.questions        = questions;
@@ -1054,7 +1033,7 @@ async function startExam(examType) {
 
   } catch (err) {
     hideLoading();
-    alert('Gagal memuat data soal. Silakan coba lagi.\nError: ' + err.message);
+    alert('Sistem Gagal memuat data soal secara total. Silakan refresh halaman.\nError: ' + err.message);
   }
 }
 

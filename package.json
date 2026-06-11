@@ -1,0 +1,11 @@
+{
+  "name": "simulasi-cpns-backend",
+  "version": "1.0.0",
+  "description": "Backend API untuk Generate Soal CPNS dengan Groq",
+  "scripts": {
+    "start": "node api/soal.js"
+  },
+  "dependencies": {
+    "groq-sdk": "^0.3.2"
+  }
+}

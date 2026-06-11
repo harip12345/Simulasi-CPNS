@@ -1,15 +1,9 @@
 import Groq from "groq-sdk";
 
-// Inisialisasi Groq Client
-// Pastikan Anda menambahkan Environment Variable GROQ_API_KEY di Dashboard Vercel Anda
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
-
 export default async function handler(req, res) {
-  // Setup CORS agar API bisa diakses dari Frontend (bahkan jika dihosting beda domain)
+  // Setup CORS agar API bisa diakses dari Frontend
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Bisa diganti URL frontend jika ingin lebih aman
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -28,15 +22,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Inisialisasi di dalam handler agar env variable terbaca sempurna
+    const groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+
     let promptText = "";
 
-    // PROMPT ENGINEER UNTUK SKD
+    // PROMPT UNTUK SKD (15 SOAL)
     if (type === 'skd') {
       promptText = `
-Anda adalah ahli pembuat soal CAT CPNS. Buatkan 3 soal simulasi SKD yang terdiri dari: 1 soal TWK (Tes Wawasan Kebangsaan), 1 soal TIU (Tes Intelejensi Umum), dan 1 soal TKP (Tes Karakteristik Pribadi).
-Output harus BERUPA JSON MURNI tanpa markdown, tanpa penjelasan.
+Anda adalah ahli pembuat soal CAT CPNS. Buatkan 15 soal simulasi SKD yang terdiri dari: 5 soal TWK, 5 soal TIU, dan 5 soal TKP.
+Output HANYA dalam format JSON MURNI tanpa markdown, tanpa penjelasan.
 
-Format JSON yang diwajibkan:
+Format JSON yang DIWAJIBKAN:
 {
   "questions": [
     {
@@ -44,42 +43,25 @@ Format JSON yang diwajibkan:
       "subtest": "TWK",
       "subtestFull": "Tes Wawasan Kebangsaan",
       "tipe": "pilihan_ganda",
-      "text": "Pertanyaan studi kasus implementasi Pancasila...",
+      "text": "Pertanyaan studi kasus implementasi Pancasila/Sejarah...",
       "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "kunciJawaban": "B",
       "nilai": { "benar": 5, "salah": 0 }
     },
-    {
-      "id": 2,
-      "subtest": "TIU",
-      "subtestFull": "Tes Intelejensi Umum",
-      "tipe": "pilihan_ganda",
-      "text": "Pertanyaan deret angka atau logika...",
-      "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
-      "kunciJawaban": "D",
-      "nilai": { "benar": 5, "salah": 0 }
-    },
-    {
-      "id": 3,
-      "subtest": "TKP",
-      "subtestFull": "Tes Karakteristik Pribadi",
-      "tipe": "tkp",
-      "text": "Pertanyaan skenario pelayanan publik/profesionalisme...",
-      "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
-      "nilaiOpsi": { "A": 1, "B": 2, "C": 5, "D": 3, "E": 4 }
-    }
+    ... (lanjutkan hingga total 15 soal)
   ]
 }
-PENTING: Untuk TKP pastikan menggunakan 'nilaiOpsi' (skor 1-5), bukan 'kunciJawaban'.
+PENTING: Untuk subtest "TKP", Anda TIDAK BOLEH menggunakan "kunciJawaban". Gunakan "nilaiOpsi" (skor 1, 2, 3, 4, 5 untuk masing-masing opsi).
+Contoh TKP: "nilaiOpsi": { "A": 1, "B": 2, "C": 5, "D": 3, "E": 4 }
 `;
     } 
-    // PROMPT ENGINEER UNTUK SKB
+    // PROMPT UNTUK SKB (10 SOAL)
     else {
       promptText = `
-Anda adalah ahli pembuat soal CAT CPNS. Buatkan 2 soal simulasi SKB (Seleksi Kompetensi Bidang) tentang tata kelola administrasi pemerintahan / Manajemen ASN terbaru.
-Output harus BERUPA JSON MURNI tanpa markdown, tanpa penjelasan.
+Anda adalah ahli pembuat soal CAT CPNS. Buatkan 10 soal simulasi SKB (Seleksi Kompetensi Bidang) tentang Tata Kelola Administrasi Pemerintahan, Manajemen ASN, dan Pelayanan Publik.
+Output HANYA dalam format JSON MURNI tanpa markdown, tanpa penjelasan.
 
-Format JSON yang diwajibkan:
+Format JSON yang DIWAJIBKAN:
 {
   "questions": [
     {
@@ -91,7 +73,8 @@ Format JSON yang diwajibkan:
       "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "kunciJawaban": "C",
       "nilai": { "benar": 5, "salah": 0 }
-    }
+    },
+    ... (lanjutkan hingga total 10 soal)
   ]
 }`;
     }
@@ -101,18 +84,18 @@ Format JSON yang diwajibkan:
       messages: [
         {
           role: "system",
-          content: "You are an API that outputs strictly valid JSON only. Do not wrap with ```json or markdown."
+          content: "You are a JSON generator. Always output valid JSON object containing a 'questions' array. Do not include markdown tags like ```json."
         },
         {
           role: "user",
           content: promptText
         }
       ],
-      // Llama 3 70b sangat mahir menghasilkan JSON sesuai format
-      model: "llama3-70b-8192", 
-      temperature: 0.7,
-      max_tokens: 2000,
-      response_format: { type: "json_object" } // Memaksa Groq menghasilkan JSON
+      // Menggunakan model cepat dan cerdas Groq untuk meminimalisir Timeout
+      model: "llama-3.3-70b-versatile", 
+      temperature: 0.5, // Suhu diturunkan agar format JSON lebih stabil
+      max_tokens: 4000,
+      response_format: { type: "json_object" }
     });
 
     // Parsing hasil jawaban AI
@@ -124,6 +107,6 @@ Format JSON yang diwajibkan:
 
   } catch (error) {
     console.error("Error from Groq API:", error);
-    res.status(500).json({ error: "Gagal men-generate soal dari AI" });
+    res.status(500).json({ error: "Gagal men-generate soal dari AI", details: error.message });
   }
 }

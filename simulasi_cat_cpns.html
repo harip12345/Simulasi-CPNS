@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulasi CAT CPNS - BKN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* =========================================================
+       RESET & BASE
+    ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bkn-blue:    #003580;
+      --bkn-blue2:   #0051c8;
+      --bkn-gold:    #f5a623;
+      --bkn-green:   #1a9e4e;
+      --bkn-red:     #c0392b;
+      --bkn-yellow:  #e8a200;
+      --bkn-gray:    #6b7280;
+      --bkn-light:   #f0f4f8;
+      --bkn-border:  #d1d5db;
+      --answered:    #1a9e4e;
+      --unanswered:  #e5e7eb;
+      --flagged:     #e8a200;
+      --current:     #003580;
+      --text-main:   #1a1a2e;
+      --text-sub:    #4a5568;
+      --radius:      8px;
+      --shadow:      0 2px 12px rgba(0,0,0,0.10);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bkn-light);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+
+    /* =========================================================
+       VIEW MANAGEMENT (SPA)
+    ========================================================= */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* =========================================================
+       LOADING SCREEN
+    ========================================================= */
+    #loading-screen {
+      position: fixed; inset: 0;
+      background: var(--bkn-blue);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #loading-screen.show { display: flex; }
+    .loader-logo { color: white; font-size: 2rem; font-weight: 800; letter-spacing: 2px; margin-bottom: 12px; }
+    .loader-sub  { color: rgba(255,255,255,0.7); font-size: 0.95rem; margin-bottom: 36px; }
+    .loader-spinner {
+      width: 48px; height: 48px;
+      border: 5px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    .loader-text { color: rgba(255,255,255,0.6); margin-top: 16px; font-size: 0.85rem; text-align: center;}
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =========================================================
+       TOP NAVBAR (all views)
+    ========================================================= */
+    .top-navbar {
+      background: var(--bkn-blue);
+      color: white;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .navbar-brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .navbar-logo {
+      width: 38px; height: 38px;
+      background: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.75rem; color: var(--bkn-blue);
+      flex-shrink: 0;
+      letter-spacing: -0.5px;
+    }
+    .navbar-title { font-weight: 700; font-size: 1.05rem; line-height: 1.2; }
+    .navbar-subtitle { font-size: 0.72rem; opacity: 0.75; font-weight: 400; }
+    .navbar-right { display: flex; align-items: center; gap: 16px; font-size: 0.85rem; }
+    .navbar-date { opacity: 0.8; }
+    .navbar-user {
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-weight: 600;
+    }
+
+    /* =========================================================
+       ===== VIEW 1: MENU UTAMA =====
+    ========================================================= */
+    #view-menu { min-height: calc(100vh - 60px); }
+
+    /* Hero Banner */
+    .hero-banner {
+      background: linear-gradient(135deg, var(--bkn-blue) 0%, var(--bkn-blue2) 60%, #1565c0 100%);
+      color: white;
+      padding: 52px 24px 44px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-banner::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .hero-title { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; margin-bottom: 10px; line-height: 1.2; }
+    .hero-desc  { font-size: 0.97rem; opacity: 0.85; max-width: 520px; margin: 0 auto 28px; line-height: 1.6; }
+    .hero-badges {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    }
+    .hero-badge {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* Info strip */
+    .info-strip {
+      background: white;
+      border-bottom: 2px solid var(--bkn-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      font-size: 0.83rem;
+      color: var(--text-sub);
+    }
+    .info-strip-item { display: flex; align-items: center; gap: 6px; }
+    .info-strip-icon { font-size: 1rem; }
+
+    /* Main content area */
+    .main-content { max-width: 960px; margin: 0 auto; padding: 36px 20px 60px; }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .section-label {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--bkn-blue2);
+      margin-bottom: 8px;
+    }
+    .section-title { font-size: 1.4rem; font-weight: 800; color: var(--text-main); }
+    .section-divider {
+      width: 48px; height: 4px;
+      background: linear-gradient(90deg, var(--bkn-blue), var(--bkn-blue2));
+      border-radius: 2px;
+      margin: 10px auto 0;
+    }
+
+    /* Exam cards */
+    .exam-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+
+    .exam-card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 2px solid transparent;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .exam-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,53,128,0.15); border-color: var(--bkn-blue2); }
+
+    .exam-card-accent {
+      height: 6px;
+      background: linear-gradient(90deg, var(--bkn-blue), var(--bkn-blue2));
+    }
+    .exam-card.skb .exam-card-accent { background: linear-gradient(90deg, #1a9e4e, #2ecc71); }
+
+    .exam-card-body { padding: 24px; }
+    .exam-card-icon {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #e8f0fe, #c5d8ff);
+    }
+    .exam-card.skb .exam-card-icon { background: linear-gradient(135deg, #d4f4e2, #a8e6c1); }
+
+    .exam-card-type {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--bkn-blue2);
+      margin-bottom: 6px;
+    }
+    .exam-card.skb .exam-card-type { color: var(--bkn-green); }
+    .exam-card-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 8px; }
+    .exam-card-desc  { font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 18px; }
+
+    .exam-card-meta {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      padding-top: 16px;
+      border-top: 1px solid var(--bkn-border);
+      margin-bottom: 18px;
+    }
+    .meta-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--bkn-light);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.78rem; font-weight: 600; color: var(--text-sub);
+    }
+
+    .exam-card-subtests { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .subtest-tag {
+      background: #e8f0fe;
+      color: var(--bkn-blue2);
+      font-size: 0.74rem; font-weight: 600;
+      padding: 3px 10px; border-radius: 10px;
+    }
+    .exam-card.skb .subtest-tag { background: #d4f4e2; color: var(--bkn-green); }
+
+    .btn-start {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--bkn-blue), var(--bkn-blue2));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.3px;
+    }
+    .btn-start:hover { opacity: 0.9; transform: scale(1.01); }
+    .exam-card.skb .btn-start { background: linear-gradient(135deg, var(--bkn-green), #27ae60); }
+
+    /* Info panels below cards */
+    .info-panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 32px; }
+    .info-panel {
+      background: white;
+      border-radius: 10px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--bkn-blue2);
+    }
+    .info-panel h4 { font-size: 0.85rem; font-weight: 700; color: var(--bkn-blue); margin-bottom: 6px; }
+    .info-panel p  { font-size: 0.8rem; color: var(--text-sub); line-height: 1.6; }
+
+    /* Passing grade table */
+    .pg-table-wrap { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 24px; margin-top: 28px; }
+    .pg-table-wrap h3 { font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .pg-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .pg-table th { background: var(--bkn-blue); color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+    .pg-table th:first-child { border-radius: 6px 0 0 0; }
+    .pg-table th:last-child  { border-radius: 0 6px 0 0; }
+    .pg-table td { padding: 9px 14px; border-bottom: 1px solid var(--bkn-border); color: var(--text-sub); }
+    .pg-table tr:last-child td { border-bottom: none; }
+    .pg-table tr:hover td { background: var(--bkn-light); }
+
+    /* Footer */
+    .site-footer {
+      background: var(--bkn-blue);
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 20px;
+      font-size: 0.8rem;
+      margin-top: 40px;
+    }
+    .site-footer strong { color: white; }
+
+    /* =========================================================
+       ===== VIEW 2: SIMULASI UJIAN =====
+    ========================================================= */
+    #view-ujian { min-height: calc(100vh - 60px); }
+
+    /* Exam Top Bar */
+    .exam-topbar {
+      background: white;
+      border-bottom: 2px solid var(--bkn-border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky; top: 60px; z-index: 90;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .exam-info { display: flex; flex-direction: column; }
+    .exam-info-type { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; color: var(--bkn-blue2); text-transform: uppercase; }
+    .exam-info-section { font-size: 1rem; font-weight: 800; color: var(--text-main); }
+
+    /* Timer */
+    .timer-box {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bkn-blue);
+      color: white;
+      border-radius: 10px;
+      padding: 8px 18px;
+      transition: background 0.5s;
+    }
+    .timer-box.warning { background: var(--bkn-yellow); }
+    .timer-box.danger  { background: var(--bkn-red); animation: pulse-timer 1s infinite; }
+    @keyframes pulse-timer { 0%,100%{opacity:1} 50%{opacity:0.75} }
+    .timer-icon { font-size: 1.2rem; }
+    .timer-label { font-size: 0.7rem; opacity: 0.8; font-weight: 500; }
+    .timer-value { font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+
+    .exam-topbar-right { display: flex; align-items: center; gap: 10px; }
+    .btn-finish {
+      background: var(--bkn-red);
+      color: white; border: none;
+      border-radius: 8px; padding: 8px 18px;
+      font-size: 0.85rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-finish:hover { opacity: 0.85; }
+
+    /* Exam layout */
+    .exam-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 0;
+      min-height: calc(100vh - 128px);
+    }
+
+    /* Left panel - question area */
+    .question-panel {
+      padding: 28px 28px 100px;
+      background: var(--bkn-light);
+    }
+
+    .question-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .question-number-badge {
+      background: var(--bkn-blue);
+      color: white;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.85rem; font-weight: 700;
+    }
+    .question-subtest-badge {
+      background: white;
+      color: var(--bkn-blue2);
+      border: 1.5px solid var(--bkn-blue2);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.78rem; font-weight: 600;
+    }
+    .question-flag-badge {
+      margin-left: auto;
+      background: #fff8e1;
+      color: var(--bkn-yellow);
+      border: 1.5px solid var(--bkn-yellow);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.78rem; font-weight: 600;
+    }
+
+    .question-card {
+      background: white;
+      border-radius: 12px;
+      padding: 26px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .question-text {
+      font-size: 0.97rem;
+      line-height: 1.8;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+    .question-image {
+      width: 100%; max-width: 460px;
+      border-radius: 8px;
+      margin: 16px 0;
+      border: 1px solid var(--bkn-border);
+    }
+
+    /* Answer options */
+    .options-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .option-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: white;
+      border: 2px solid var(--bkn-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .option-item:hover { border-color: var(--bkn-blue2); background: #f0f4ff; transform: translateX(3px); }
+    .option-item.selected {
+      border-color: var(--bkn-green);
+      background: #edfaf3;
+    }
+    .option-letter {
+      width: 30px; height: 30px; flex-shrink: 0;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem;
+      background: var(--bkn-light);
+      color: var(--bkn-blue);
+      border: 1.5px solid var(--bkn-border);
+      transition: background 0.15s, color 0.15s;
+    }
+    .option-item.selected .option-letter {
+      background: var(--bkn-green); color: white; border-color: var(--bkn-green);
+    }
+    .option-text { font-size: 0.9rem; line-height: 1.6; padding-top: 4px; }
+
+    /* Navigation buttons bottom */
+    .nav-bottom {
+      position: fixed; bottom: 0; left: 0;
+      width: calc(100% - 300px);
+      background: white;
+      border-top: 2px solid var(--bkn-border);
+      padding: 12px 28px;
+      display: flex; gap: 10px;
+      z-index: 80;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+    }
+    .btn-nav {
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.15s;
+    }
+    .btn-prev { background: var(--bkn-light); color: var(--text-main); border: 1.5px solid var(--bkn-border); }
+    .btn-prev:hover { background: var(--bkn-border); }
+    .btn-flag { background: #fff8e1; color: var(--bkn-yellow); border: 1.5px solid var(--bkn-yellow); }
+    .btn-flag:hover { background: #ffe9a0; }
+    .btn-flag.active { background: var(--bkn-yellow); color: white; }
+    .btn-next { background: var(--bkn-blue); color: white; margin-left: auto; }
+    .btn-next:hover { background: var(--bkn-blue2); }
+    .btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Right panel - navigation grid */
+    .nav-panel {
+      background: white;
+      border-left: 2px solid var(--bkn-border);
+      padding: 20px 16px;
+      overflow-y: auto;
+      height: calc(100vh - 128px);
+      position: sticky; top: 128px;
+    }
+    .nav-panel-title {
+      font-size: 0.8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-sub);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--bkn-border);
+    }
+
+    /* Section tabs inside nav panel */
+    .section-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .section-tab {
+      background: var(--bkn-light);
+      border: 1.5px solid var(--bkn-border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; color: var(--text-sub);
+      transition: all 0.15s;
+    }
+    .section-tab.active { background: var(--bkn-blue); color: white; border-color: var(--bkn-blue); }
+
+    .soal-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .soal-btn {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 1.5px solid var(--bkn-border);
+      background: var(--unanswered);
+      color: #555;
+      font-size: 0.78rem; font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .soal-btn:hover { border-color: var(--bkn-blue2); color: var(--bkn-blue2); }
+    .soal-btn.answered { background: var(--answered); color: white; border-color: var(--answered); }
+    .soal-btn.flagged  { background: var(--flagged); color: white; border-color: var(--flagged); }
+    .soal-btn.current  { border: 2.5px solid var(--current); box-shadow: 0 0 0 2px rgba(0,53,128,0.25); }
+
+    /* Legend */
+    .nav-legend { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--bkn-border); }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.76rem; color: var(--text-sub); }
+    .legend-dot {
+      width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+      border: 1.5px solid transparent;
+    }
+    .legend-dot.unanswered { background: var(--unanswered); border-color: var(--bkn-border); }
+    .legend-dot.answered   { background: var(--answered); }
+    .legend-dot.flagged    { background: var(--flagged); }
+    .legend-dot.current    { background: white; border: 2px solid var(--current); }
+
+    /* Progress bar */
+    .progress-wrap { margin-bottom: 14px; }
+    .progress-label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 5px; display: flex; justify-content: space-between; }
+    .progress-bar-bg { background: var(--bkn-light); border-radius: 20px; height: 8px; overflow: hidden; border: 1px solid var(--bkn-border); }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--bkn-green), #27ae60); border-radius: 20px; transition: width 0.4s; }
+
+    /* =========================================================
+       ===== VIEW 3: HASIL UJIAN =====
+    ========================================================= */
+    #view-hasil { min-height: calc(100vh - 60px); }
+
+    .hasil-container { max-width: 760px; margin: 0 auto; padding: 40px 20px; }
+
+    .hasil-header {
+      text-align: center;
+      background: linear-gradient(135deg, var(--bkn-blue), var(--bkn-blue2));
+      color: white;
+      border-radius: 16px;
+      padding: 36px 28px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hasil-header::before {
+      content: '✓';
+      position: absolute; font-size: 180px; opacity: 0.04;
+      right: -20px; top: -20px; font-weight: 900;
+    }
+    .hasil-icon { font-size: 3rem; margin-bottom: 10px; }
+    .hasil-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
+    .hasil-subtitle { font-size: 0.9rem; opacity: 0.8; }
+
+    .skor-utama {
+      text-align: center;
+      background: white;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .skor-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; }
+    .skor-value { font-size: 3.5rem; font-weight: 800; color: var(--bkn-blue); line-height: 1; }
+    .skor-max   { font-size: 1rem; color: var(--text-sub); margin-top: 4px; }
+
+    /* SKD score breakdown */
+    .skor-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+
+    .skor-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      text-align: center;
+      border-top: 4px solid var(--bkn-blue2);
+    }
+    .skor-card-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-sub); margin-bottom: 8px; }
+    .skor-card-name  { font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 12px; }
+    .skor-card-value { font-size: 1.9rem; font-weight: 800; margin-bottom: 6px; }
+    .skor-card-pg    { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 10px; }
+    .status-badge {
+      display: inline-block;
+      border-radius: 20px; padding: 4px 14px;
+      font-size: 0.78rem; font-weight: 700;
+    }
+    .status-badge.lulus { background: #d4f4e2; color: var(--bkn-green); }
+    .status-badge.tidak-lulus { background: #fde8e7; color: var(--bkn-red); }
+
+    /* SKD overall status */
+    .overall-status {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .overall-icon { font-size: 2.2rem; }
+    .overall-text h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 4px; }
+    .overall-text p  { font-size: 0.85rem; color: var(--text-sub); line-height: 1.5; }
+
+    /* Detail soal */
+    .review-section {
+      background: white; border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 20px;
+    }
+    .review-header {
+      padding: 16px 22px;
+      background: var(--bkn-light);
+      border-bottom: 1px solid var(--bkn-border);
+      font-weight: 700; font-size: 0.9rem;
+      cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .review-body { padding: 18px 22px; display: none; }
+    .review-body.open { display: block; }
+    .review-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid var(--bkn-border);
+      font-size: 0.85rem;
+    }
+    .review-item:last-child { border-bottom: none; }
+    .review-no { font-weight: 700; color: var(--bkn-blue); min-width: 28px; }
+    .review-q  { flex: 1; color: var(--text-sub); line-height: 1.5; }
+    .review-ans { font-weight: 700; }
+    .review-ans.correct { color: var(--bkn-green); }
+    .review-ans.wrong   { color: var(--bkn-red); }
+    .review-ans.unanswered { color: var(--bkn-gray); }
+
+    /* Back button */
+    .btn-back-menu {
+      display: block; width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--bkn-blue), var(--bkn-blue2));
+      color: white; border: none; border-radius: 10px;
+      font-size: 0.97rem; font-weight: 700;
+      cursor: pointer; text-align: center;
+      transition: opacity 0.2s;
+      margin-bottom: 32px;
+    }
+    .btn-back-menu:hover { opacity: 0.88; }
+
+    /* =========================================================
+       MODAL KONFIRMASI
+    ========================================================= */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: white; border-radius: 16px; max-width: 420px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25); overflow: hidden;
+    }
+    .modal-header {
+      background: var(--bkn-blue); color: white; padding: 20px 24px;
+      font-weight: 800; font-size: 1rem;
+    }
+    .modal-body { padding: 22px 24px; font-size: 0.9rem; line-height: 1.7; color: var(--text-sub); }
+    .modal-stat {
+      display: flex; justify-content: space-between;
+      background: var(--bkn-light); border-radius: 8px;
+      padding: 12px 16px; margin: 14px 0;
+      font-size: 0.85rem;
+    }
+    .modal-stat span { font-weight: 700; color: var(--text-main); }
+    .modal-footer { display: flex; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--bkn-border); }
+    .btn-modal-cancel { flex: 1; padding: 10px; background: var(--bkn-light); border: 1.5px solid var(--bkn-border); border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; }
+    .btn-modal-confirm { flex: 1; padding: 10px; background: var(--bkn-red); color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media (max-width: 768px) {
+      .exam-layout { grid-template-columns: 1fr; }
+      .nav-panel {
+        border-left: none; border-top: 2px solid var(--bkn-border);
+        height: auto; position: static;
+        order: -1;
+      }
+      .nav-bottom { width: 100%; }
+      .soal-grid { grid-template-columns: repeat(7, 1fr); }
+      .exam-topbar { position: static; }
+      .navbar-date { display: none; }
+      .skor-breakdown { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .hero-title { font-size: 1.4rem; }
+      .soal-grid { grid-template-columns: repeat(6, 1fr); }
+      .exam-layout { grid-template-columns: 1fr; }
+      .question-panel { padding: 18px 14px 100px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOADING SCREEN
+============================================================ -->
+<div id="loading-screen">
+  <div class="loader-logo">BKN</div>
+  <div class="loader-sub">Badan Kepegawaian Negara</div>
+  <div class="loader-spinner"></div>
+  <div class="loader-text" id="loader-msg">Memuat data soal...<br><small>Menghubungkan ke API Groq...</small></div>
+</div>
+
+<!-- ============================================================
+     MODAL KONFIRMASI SELESAI
+============================================================ -->
+<div class="modal-overlay" id="modal-finish">
+  <div class="modal-box">
+    <div class="modal-header">⚠️ Konfirmasi Selesai Ujian</div>
+    <div class="modal-body">
+      Apakah Anda yakin ingin mengakhiri ujian? Setelah dikonfirmasi, Anda tidak dapat mengubah jawaban.
+      <div class="modal-stat">
+        <div>Soal Terjawab</div><span id="modal-answered">0</span>
+      </div>
+      <div class="modal-stat">
+        <div>Soal Belum Dijawab</div><span id="modal-unanswered">0</span>
+      </div>
+      <div class="modal-stat">
+        <div>Soal Ragu-ragu</div><span id="modal-flagged">0</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-modal-confirm" onclick="submitExam()">Ya, Selesai</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOP NAVBAR (shared)
+============================================================ -->
+<nav class="top-navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">BKN</div>
+    <div>
+      <div class="navbar-title">CAT BKN</div>
+      <div class="navbar-subtitle">Computer Assisted Test</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <div class="navbar-date" id="navbar-date"></div>
+    <div class="navbar-user">👤 Peserta</div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     VIEW 1: MENU UTAMA
+============================================================ -->
+<div id="view-menu" class="view active">
+  <div class="hero-banner">
+    <div class="hero-eyebrow">🏛️ Sistem CAT Resmi · AI Powered</div>
+    <h1 class="hero-title">Simulasi Ujian CAT CPNS</h1>
+    <p class="hero-desc">Platform latihan dengan soal yang di-generate langsung oleh kecerdasan buatan (Groq API) secara real-time untuk variasi soal tanpa batas.</p>
+    <div class="hero-badges">
+      <span class="hero-badge">📋 SKD & SKB</span>
+      <span class="hero-badge">⏱️ Timer Real-time</span>
+      <span class="hero-badge">🤖 AI Generated</span>
+      <span class="hero-badge">✅ Sesuai Standar BKN</span>
+    </div>
+  </div>
+
+  <div class="info-strip">
+    <div class="info-strip-item"><span class="info-strip-icon">📌</span> Pastikan koneksi internet stabil</div>
+    <div class="info-strip-item"><span class="info-strip-icon">⏳</span> AI butuh waktu 3-8 detik untuk membuat soal</div>
+  </div>
+
+  <div class="main-content">
+    <div class="section-header">
+      <div class="section-label">Pilih Jenis Ujian</div>
+      <div class="section-title">Mulai Simulasi Tes CPNS</div>
+      <div class="section-divider"></div>
+    </div>
+
+    <div class="exam-cards">
+      <!-- SKD Card -->
+      <div class="exam-card" onclick="startExam('skd')">
+        <div class="exam-card-accent"></div>
+        <div class="exam-card-body">
+          <div class="exam-card-icon">📝</div>
+          <div class="exam-card-type">Seleksi Kompetensi Dasar</div>
+          <div class="exam-card-title">Simulasi SKD</div>
+          <div class="exam-card-desc">Tes kemampuan dasar meliputi TWK, TIU, dan TKP. Soal dibuat otomatis oleh AI.</div>
+          <div class="exam-card-meta">
+            <div class="meta-chip">⏱️ 100 Menit</div>
+            <div class="meta-chip">🤖 AI Gen</div>
+          </div>
+          <button class="btn-start">▶ Generate & Mulai SKD</button>
+        </div>
+      </div>
+
+      <!-- SKB Card -->
+      <div class="exam-card skb" onclick="startExam('skb')">
+        <div class="exam-card-accent"></div>
+        <div class="exam-card-body">
+          <div class="exam-card-icon">🏛️</div>
+          <div class="exam-card-type">Seleksi Kompetensi Bidang</div>
+          <div class="exam-card-title">Simulasi SKB</div>
+          <div class="exam-card-desc">Tes penguasaan bidang jabatan. Soal teknis dan fungsional di-generate oleh AI.</div>
+          <div class="exam-card-meta">
+            <div class="meta-chip">⏱️ 90 Menit</div>
+            <div class="meta-chip">🤖 AI Gen</div>
+          </div>
+          <button class="btn-start">▶ Generate & Mulai SKB</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIEW 2: SIMULASI UJIAN
+============================================================ -->
+<div id="view-ujian" class="view">
+  <div class="exam-topbar">
+    <div class="exam-info">
+      <div class="exam-info-type" id="exam-type-label">SKD</div>
+      <div class="exam-info-section" id="exam-section-label">Tes Wawasan Kebangsaan (TWK)</div>
+    </div>
+    <div class="exam-topbar-right">
+      <div class="timer-box" id="timer-box">
+        <span class="timer-icon">⏱️</span>
+        <div>
+          <div class="timer-label">Sisa Waktu</div>
+          <div class="timer-value" id="timer-display">100:00</div>
+        </div>
+      </div>
+      <button class="btn-finish" onclick="openModal()">⏹ Selesai Ujian</button>
+    </div>
+  </div>
+
+  <div class="exam-layout">
+    <div class="question-panel" id="question-panel">
+      <div class="question-header">
+        <div class="question-number-badge" id="q-number-badge">Soal 1</div>
+        <div class="question-subtest-badge" id="q-subtest-badge">TWK</div>
+        <div class="question-flag-badge" id="q-flag-badge" style="display:none;">🚩 Ragu-ragu</div>
+      </div>
+      <div class="question-card">
+        <div class="question-text" id="question-text">Memuat soal...</div>
+      </div>
+      <div class="options-list" id="options-list"></div>
+    </div>
+
+    <div class="nav-panel">
+      <div class="nav-panel-title">Navigasi Soal</div>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>Progres Pengerjaan</span>
+          <span id="progress-text">0 / 0</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="section-tabs" id="section-tabs"></div>
+      <div class="soal-grid" id="soal-grid"></div>
+      <div class="nav-legend">
+        <div class="legend-item"><div class="legend-dot unanswered"></div> Belum dijawab</div>
+        <div class="legend-item"><div class="legend-dot answered"></div> Sudah dijawab</div>
+        <div class="legend-item"><div class="legend-dot flagged"></div> Ragu-ragu</div>
+        <div class="legend-item"><div class="legend-dot current"></div> Soal aktif</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="btn-nav btn-prev" id="btn-prev" onclick="navigate(-1)">◀ Sebelumnya</button>
+    <button class="btn-nav btn-flag" id="btn-flag" onclick="toggleFlag()">🚩 Ragu-ragu</button>
+    <button class="btn-nav btn-next" id="btn-next" onclick="navigate(1)">Selanjutnya ▶</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIEW 3: HASIL UJIAN
+============================================================ -->
+<div id="view-hasil" class="view">
+  <div class="hasil-container">
+    <div class="hasil-header">
+      <div class="hasil-icon">🎓</div>
+      <div class="hasil-title">Ujian Selesai!</div>
+      <div class="hasil-subtitle">Terima kasih telah menyelesaikan simulasi CAT CPNS</div>
+    </div>
+    <div class="skor-utama">
+      <div class="skor-label">Total Nilai Akhir</div>
+      <div class="skor-value" id="total-score">0</div>
+      <div class="skor-max" id="score-max">dari skor maksimal</div>
+    </div>
+    <div id="skd-breakdown" style="display:none;">
+      <div class="skor-breakdown" id="skd-cards"></div>
+      <div class="overall-status" id="overall-status-box">
+        <div class="overall-icon" id="overall-icon">🏆</div>
+        <div class="overall-text">
+          <h3 id="overall-status-title">Status Kelulusan SKD</h3>
+          <p id="overall-status-desc">Keterangan status kelulusan passing grade.</p>
+        </div>
+      </div>
+    </div>
+    <div id="skb-info" style="display:none;">
+      <div class="skor-utama" style="background: var(--bkn-light);">
+        <div class="skor-label">Informasi SKB</div>
+        <p style="font-size:0.88rem; color: var(--text-sub); line-height:1.7; margin-top:8px;" id="skb-desc-text">
+          Skor SKB Anda akan diakumulasi dengan nilai SKD untuk penetapan peringkat akhir.
+        </p>
+      </div>
+    </div>
+    <div class="review-section" id="review-section">
+      <div class="review-header" onclick="toggleReview()">
+        📋 Tinjauan Jawaban Soal <span id="review-toggle-icon">▼</span>
+      </div>
+      <div class="review-body" id="review-body"></div>
+    </div>
+    <button class="btn-back-menu" onclick="goToMenu()">🏠 Kembali ke Menu Utama</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT - STATE MANAGEMENT & LOGIC
+============================================================ -->
+<script>
+let state = {
+  currentView:    'menu',
+  currentExamType: null,
+  questions:      [],
+  userAnswers:    {},
+  flaggedQuestions: new Set(),
+  currentQuestion: 0,
+  timeLeft:       0,
+  timerInterval:  null,
+  examStartTime:  null,
+};
+
+// URL API Vercel Anda. Kosongkan '/' jika HTML & API di-host di Vercel yang sama.
+// Jika di host terpisah (misal GitHub pages), isi dengan full URL Vercel Anda: 'https://nama-project.vercel.app/api/soal'
+const VERCEL_API_URL = '/api/soal'; 
+
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + viewId).classList.add('active');
+  state.currentView = viewId;
+  window.scrollTo(0, 0);
+}
+
+(function initDate() {
+  const now = new Date();
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('navbar-date').textContent = now.toLocaleDateString('id-ID', opts);
+})();
+
+function showLoading(msg) {
+  const el = document.getElementById('loading-screen');
+  document.getElementById('loader-msg').innerHTML = msg || 'Memuat data...';
+  el.classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-screen').classList.remove('show');
+}
+
+/* ==============================================================
+   FETCH DARI API GROQ VIA VERCEL
+============================================================== */
+async function fetchFromAPI(examType) {
+  try {
+    const response = await fetch(`${VERCEL_API_URL}?type=${examType}`);
+    
+    if (!response.ok) {
+        throw new Error('Gagal terhubung ke Vercel API');
+    }
+    
+    const data = await response.json();
+    return data.questions;
+  } catch (error) {
+    console.warn("API Gagal, menggunakan mock data statis sebagai cadangan:", error);
+    return loadMockData(examType); // Fallback ke mock data jika Vercel/Groq error
+  }
+}
+
+// Fallback Mock Data jika API Mati
+async function loadMockData(examType) {
+  if (examType === 'skd') {
+    return [
+      {
+        id: 1, subtest: 'TWK', subtestFull: 'Tes Wawasan Kebangsaan',
+        tipe: 'pilihan_ganda', text: '(MOCK) Pancasila sebagai dasar negara diusulkan oleh...',
+        options: { A: 'Moh Yamin', B: 'Soekarno', C: 'Soepomo', D: 'Hatta', E: 'Sjahrir' },
+        kunciJawaban: 'B', nilai: { benar: 5, salah: 0 }
+      },
+      {
+        id: 2, subtest: 'TIU', subtestFull: 'Tes Intelejensi Umum',
+        tipe: 'pilihan_ganda', text: '(MOCK) Jika 3x + 7 = 22, maka x adalah...',
+        options: { A: '3', B: '4', C: '5', D: '6', E: '7' },
+        kunciJawaban: 'C', nilai: { benar: 5, salah: 0 }
+      },
+      {
+        id: 3, subtest: 'TKP', subtestFull: 'Tes Karakteristik Pribadi',
+        tipe: 'tkp', text: '(MOCK) Rekan kerja Anda kesulitan menggunakan aplikasi baru. Anda...',
+        options: { A: 'Mengejeknya', B: 'Membiarkan', C: 'Melaporkan ke atasan', D: 'Membantu sebisanya', E: 'Mengajarinya hingga paham' },
+        nilaiOpsi: { A: 1, B: 2, C: 3, D: 4, E: 5 }
+      }
+    ];
+  }
+  return [];
+}
+
+/* ==============================================================
+   START EXAM
+============================================================== */
+async function startExam(examType) {
+  showLoading('Membangun Bank Soal...<br><small>Meminta Groq AI untuk generate soal ' + examType.toUpperCase() + '</small>');
+
+  try {
+    // Memanggil Vercel API
+    const questions = await fetchFromAPI(examType);
+
+    if(!questions || questions.length === 0) throw new Error("Data soal kosong");
+
+    state.currentExamType  = examType;
+    state.questions        = questions;
+    state.userAnswers      = {};
+    state.flaggedQuestions = new Set();
+    state.currentQuestion  = 0;
+    state.examStartTime    = new Date();
+    state.timeLeft = examType === 'skd' ? 100 * 60 : 90 * 60;
+
+    hideLoading();
+    showView('ujian');
+
+    renderExamHeader();
+    renderNavGrid();
+    renderQuestion(0);
+    startTimer();
+
+  } catch (err) {
+    hideLoading();
+    alert('Gagal memuat data soal. Silakan coba lagi.\nError: ' + err.message);
+  }
+}
+
+function renderExamHeader() {
+  const type = state.currentExamType.toUpperCase();
+  document.getElementById('exam-type-label').textContent = 'Simulasi ' + type;
+}
+
+function startTimer() {
+  clearInterval(state.timerInterval);
+  updateTimerDisplay();
+  state.timerInterval = setInterval(() => {
+    state.timeLeft--;
+    updateTimerDisplay();
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerInterval);
+      alert('⏰ Waktu habis! Jawaban Anda akan disubmit otomatis.');
+      submitExam();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  const display = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  document.getElementById('timer-display').textContent = display;
+  const box = document.getElementById('timer-box');
+  box.classList.remove('warning', 'danger');
+  if (state.timeLeft <= 300) box.classList.add('danger');
+  else if (state.timeLeft <= 600) box.classList.add('warning');
+}
+
+function renderNavGrid() {
+  const grid = document.getElementById('soal-grid');
+  const tabs  = document.getElementById('section-tabs');
+  grid.innerHTML = '';
+  tabs.innerHTML = '';
+
+  const questions = state.questions;
+  if (state.currentExamType === 'skd') {
+    const subtests = [...new Set(questions.map(q => q.subtest))];
+    subtests.forEach((st, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'section-tab' + (i === 0 ? ' active' : '');
+      btn.textContent = st;
+      btn.onclick = () => scrollToSubtest(st);
+      tabs.appendChild(btn);
+    });
+  }
+
+  questions.forEach((q, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'soal-btn';
+    btn.id = 'soal-btn-' + idx;
+    btn.textContent = idx + 1;
+    btn.onclick = () => renderQuestion(idx);
+    grid.appendChild(btn);
+  });
+  updateNavGrid();
+}
+
+function updateNavGrid() {
+  state.questions.forEach((_, idx) => {
+    const btn = document.getElementById('soal-btn-' + idx);
+    if (!btn) return;
+    btn.className = 'soal-btn';
+    if (state.flaggedQuestions.has(idx)) btn.classList.add('flagged');
+    else if (state.userAnswers[idx] !== undefined) btn.classList.add('answered');
+    if (idx === state.currentQuestion) btn.classList.add('current');
+  });
+
+  const total    = state.questions.length;
+  const answered = Object.keys(state.userAnswers).length;
+  document.getElementById('progress-text').textContent = answered + ' / ' + total;
+  document.getElementById('progress-bar').style.width = (total > 0 ? (answered/total*100) : 0) + '%';
+}
+
+function renderQuestion(idx) {
+  state.currentQuestion = idx;
+  const q = state.questions[idx];
+  if (!q) return;
+
+  document.getElementById('q-number-badge').textContent   = 'Soal ' + (idx + 1);
+  document.getElementById('q-subtest-badge').textContent  = q.subtest;
+  document.getElementById('exam-section-label').textContent = q.subtestFull || q.subtest;
+
+  const flagBadge = document.getElementById('q-flag-badge');
+  flagBadge.style.display = state.flaggedQuestions.has(idx) ? 'flex' : 'none';
+
+  const flagBtn = document.getElementById('btn-flag');
+  flagBtn.classList.toggle('active', state.flaggedQuestions.has(idx));
+
+  document.getElementById('question-text').innerHTML = q.text;
+
+  const optionsList = document.getElementById('options-list');
+  optionsList.innerHTML = '';
+  const letters = Object.keys(q.options);
+  letters.forEach(letter => {
+    const isSelected = state.userAnswers[idx] === letter;
+    const item = document.createElement('div');
+    item.className = 'option-item' + (isSelected ? ' selected' : '');
+    item.onclick = () => selectAnswer(idx, letter);
+    item.innerHTML = `
+      <div class="option-letter">${letter}</div>
+      <div class="option-text">${q.options[letter]}</div>
+    `;
+    optionsList.appendChild(item);
+  });
+
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').disabled = idx === state.questions.length - 1;
+
+  updateNavGrid();
+
+  if (state.currentExamType === 'skd') {
+    document.querySelectorAll('.section-tab').forEach(t => {
+      t.classList.toggle('active', t.textContent === q.subtest);
+    });
+  }
+
+  const activeBtn = document.getElementById('soal-btn-' + idx);
+  if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function selectAnswer(qIdx, letter) {
+  state.userAnswers[qIdx] = letter;
+  renderQuestion(qIdx);
+}
+
+function navigate(dir) {
+  const next = state.currentQuestion + dir;
+  if (next >= 0 && next < state.questions.length) {
+    renderQuestion(next);
+  }
+}
+
+function toggleFlag() {
+  const idx = state.currentQuestion;
+  if (state.flaggedQuestions.has(idx)) state.flaggedQuestions.delete(idx);
+  else state.flaggedQuestions.add(idx);
+  renderQuestion(idx);
+}
+
+function scrollToSubtest(subtest) {
+  const firstIdx = state.questions.findIndex(q => q.subtest === subtest);
+  if (firstIdx !== -1) renderQuestion(firstIdx);
+}
+
+function openModal() {
+  const total    = state.questions.length;
+  const answered = Object.keys(state.userAnswers).length;
+  const flagged  = state.flaggedQuestions.size;
+  document.getElementById('modal-answered').textContent   = answered;
+  document.getElementById('modal-unanswered').textContent = total - answered;
+  document.getElementById('modal-flagged').textContent    = flagged;
+  document.getElementById('modal-finish').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-finish').classList.remove('show');
+}
+
+function submitExam() {
+  closeModal();
+  clearInterval(state.timerInterval);
+  calculateAndShowResult();
+}
+
+function calculateAndShowResult() {
+  const { questions, userAnswers, currentExamType } = state;
+
+  if (currentExamType === 'skd') {
+    let skor = { TWK: 0, TIU: 0, TKP: 0 };
+    const pg  = { TWK: 65, TIU: 80, TKP: 166 };
+
+    questions.forEach((q, idx) => {
+      const jawaban = userAnswers[idx];
+      if (q.tipe === 'tkp') {
+        if (jawaban && q.nilaiOpsi && q.nilaiOpsi[jawaban] !== undefined) {
+          skor.TKP += q.nilaiOpsi[jawaban];
+        }
+      } else {
+        if (jawaban === q.kunciJawaban) {
+          skor[q.subtest] += (q.nilai?.benar || 5);
+        }
+      }
+    });
+
+    const total = skor.TWK + skor.TIU + skor.TKP;
+    const lulusAll = skor.TWK >= pg.TWK && skor.TIU >= pg.TIU && skor.TKP >= pg.TKP;
+
+    document.getElementById('total-score').textContent = total;
+    document.getElementById('score-max').textContent   = 'dari skor maksimal 550';
+    document.getElementById('skd-breakdown').style.display = 'block';
+    document.getElementById('skb-info').style.display      = 'none';
+
+    const cardsHTML = [
+      { key: 'TWK', name: 'Tes Wawasan Kebangsaan', pg: pg.TWK, skor: skor.TWK, color: '#003580' },
+      { key: 'TIU', name: 'Tes Intelejensi Umum',    pg: pg.TIU, skor: skor.TIU, color: '#0051c8' },
+      { key: 'TKP', name: 'Tes Karakteristik Pribadi', pg: pg.TKP, skor: skor.TKP, color: '#1a9e4e' },
+    ].map(sub => {
+      const lulus = sub.skor >= sub.pg;
+      return `
+        <div class="skor-card" style="border-top-color:${sub.color}">
+          <div class="skor-card-label">${sub.key}</div>
+          <div class="skor-card-name">${sub.name}</div>
+          <div class="skor-card-value" style="color:${sub.color}">${sub.skor}</div>
+          <div class="skor-card-pg">Passing Grade: <strong>${sub.pg}</strong></div>
+          <span class="status-badge ${lulus ? 'lulus' : 'tidak-lulus'}">${lulus ? '✅ Lulus PG' : '❌ Tidak Lulus PG'}</span>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('skd-cards').innerHTML = cardsHTML;
+
+    const statusBox   = document.getElementById('overall-status-box');
+    const statusIcon  = document.getElementById('overall-icon');
+    const statusTitle = document.getElementById('overall-status-title');
+    const statusDesc  = document.getElementById('overall-status-desc');
+
+    if (lulusAll) {
+      statusBox.style.borderLeft = '5px solid var(--bkn-green)';
+      statusIcon.textContent  = '🏆';
+      statusTitle.textContent = 'Selamat! Anda LULUS Passing Grade SKD';
+      statusDesc.textContent  = 'Semua nilai subtes Anda memenuhi passing grade.';
+      statusTitle.style.color = 'var(--bkn-green)';
+    } else {
+      statusBox.style.borderLeft = '5px solid var(--bkn-red)';
+      statusIcon.textContent  = '📋';
+      statusTitle.textContent = 'Belum Lulus Passing Grade SKD';
+      statusDesc.textContent  = 'Satu atau lebih nilai subtes Anda belum mencapai passing grade.';
+      statusTitle.style.color = 'var(--bkn-red)';
+    }
+  }
+
+  if (currentExamType === 'skb') {
+    let total = 0;
+    questions.forEach((q, idx) => {
+      const jawaban = userAnswers[idx];
+      if (jawaban === q.kunciJawaban) total += (q.nilai?.benar || 5);
+    });
+
+    document.getElementById('total-score').textContent = total;
+    document.getElementById('score-max').textContent   = 'dari skor maksimal ' + (questions.length * 5);
+    document.getElementById('skd-breakdown').style.display = 'none';
+    document.getElementById('skb-info').style.display      = 'block';
+    document.getElementById('skb-desc-text').textContent =
+      'Skor SKB Anda adalah ' + total + ' dari maksimal ' + (questions.length * 5) + ' poin.';
+  }
+
+  const reviewBody = document.getElementById('review-body');
+  reviewBody.innerHTML = questions.map((q, idx) => {
+    const jawaban = state.userAnswers[idx];
+    let ansClass = 'unanswered';
+    let ansText  = 'Tidak dijawab';
+
+    if (jawaban) {
+      if (q.tipe === 'tkp') {
+        ansClass = 'correct';
+        ansText  = jawaban + ' (Skor: ' + (q.nilaiOpsi?.[jawaban] || 0) + ')';
+      } else if (jawaban === q.kunciJawaban) {
+        ansClass = 'correct';
+        ansText  = jawaban + ' ✓ Benar';
+      } else {
+        ansClass = 'wrong';
+        ansText  = jawaban + ' ✗ (Kunci: ' + q.kunciJawaban + ')';
+      }
+    }
+
+    return `
+      <div class="review-item">
+        <div class="review-no">${idx + 1}.</div>
+        <div class="review-q">${q.text.substring(0, 80)}${q.text.length > 80 ? '...' : ''}</div>
+        <div class="review-ans ${ansClass}">${ansText}</div>
+      </div>
+    `;
+  }).join('');
+
+  showView('hasil');
+}
+
+function toggleReview() {
+  const body = document.getElementById('review-body');
+  const icon = document.getElementById('review-toggle-icon');
+  const open  = body.classList.toggle('open');
+  icon.textContent = open ? '▲' : '▼';
+}
+
+function goToMenu() {
+  clearInterval(state.timerInterval);
+  state = {
+    currentView: 'menu', currentExamType: null,
+    questions: [], userAnswers: {}, flaggedQuestions: new Set(),
+    currentQuestion: 0, timeLeft: 0,
+    timerInterval: null, examStartTime: null,
+  };
+  showView('menu');
+}
+
+document.getElementById('modal-finish').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
